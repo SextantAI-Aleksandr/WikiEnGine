@@ -18,6 +18,19 @@ def row_json(row: str) -> Dict[str, object]:
     return dict(jz) 
 
 
+def or_empty_list(x):
+    # if x = None, return an empty list
+    # Some article properties that are normally list are set to None on occasion
+    # This confuses OpenSearch
+    # Ensure that if x is None to return []
+    # else if x is not of type 'list', wrap it in one
+    if x == None:
+        return [] 
+    elif type(x).__name__ != 'list':
+        return [x]
+    else:
+        return x 
+
 class Place:
     def __init__(self, coord: Dict[str, object]):
         # The 'coordinates' field seems to give a list of JSON objects, commonly like this:
@@ -39,13 +52,13 @@ class Article:
         self.title: str = jz['title']
         self.text: str = jz['text']
         self.auxiliary_text: str = jz['auxiliary_text']
-        self.headings: List[str] = jz['heading']
-        self.categories: List[str] = jz['category']
-        self.places: List[Place] = [ Place(coord) for coord in jz.get('coordinates', [])]
-        self.outgoing_links: List[str] = jz['outgoing_link']
+        self.headings: List[str] = or_empty_list(jz['heading'])
+        self.categories: List[str] = or_empty_list(jz['category'])
+        self.places: List[Place] = [ Place(coord) for coord in or_empty_list(jz.get('coordinates', [])) ]
+        self.outgoing_links: List[str] = or_empty_list(jz['outgoing_link'])
         self.count_incoming_links: int = int(jz.get('incoming_links', 0))
-        self.external_links: List[str] = jz['external_link']
-        self.redirects: List[str] = [ rd['title'] for rd in jz.get('redirect',[]) ]
+        self.external_links: List[str] = or_empty_list(jz['external_link'])
+        self.redirects: List[str] = [ rd['title'] for rd in or_empty_list(jz.get('redirect',[])) ]
         # optional properties
         self.opening_text: Optional[str] = jz.get('opening_text', None) # crawler-style summary
         self.popularity_score: Optional[float] = jz.get('popularity_score', None)
